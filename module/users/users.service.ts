@@ -5,13 +5,17 @@ import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/createUser.dto';
 import { UpdateUserDto } from './dto/updateUser.dto';
 import { Role } from 'module/auth/util/role.enum';
+import * as bcrypt from 'bcrypt';
+import { PaginationDto } from 'dto/pagination.dto';
+import { DEFAULT_PAGE_SIZE } from 'module/auth/constants';
 
 // export type User = any; //Alias
 
 @Injectable()
 export class UsersService {
 
-    constructor(@InjectRepository(User) private readonly userRepository:Repository<User>){}
+    constructor(
+      @InjectRepository(User) private readonly userRepository:Repository<User>){}
 
 //   private readonly users = [
 //     {
@@ -57,18 +61,37 @@ export class UsersService {
     }
   }
 
-  async findAll() {
-    return this.userRepository.find(); 
+  async findAll(paginationDto : PaginationDto) {
+    return this.userRepository.find({
+      //if this is undefined, it will start from the first record
+      skip: paginationDto.skip, 
+      //it will take all the records from the skipping point to the last 
+      // (could not let it happen)
+      take: paginationDto.limit ?? DEFAULT_PAGE_SIZE
+      
+    }); 
   }
 
   async create(userDto:CreateUserDto) {
     let newUser:User = new User();
     newUser.username = userDto.username;
-    newUser.password = userDto.password;
+    newUser.password = await this.bcryptHashingPassword(userDto.password);
     newUser.role = await this.decideRoles(newUser.username);
 
     return await this.userRepository.save(newUser);
   }
+
+  public async bcryptHashingPassword(password:string){
+    const saltOrRounds = 10;
+    const hash = await bcrypt.hash(password, saltOrRounds);
+    return hash;
+  }
+
+  public async checkEncryptedPassword(input_pass: string, correct_pass){
+    const isMatch = await bcrypt.compare(input_pass, correct_pass);
+    return isMatch;
+  }
+
 
   async decideRoles(username:string):Promise<string>{
     if(username.includes("admin")){

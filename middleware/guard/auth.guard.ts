@@ -9,11 +9,24 @@ import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 
 import { Request } from 'express';
+import { AuthService } from 'module/auth/auth.service';
 import { IS_PUBLIC_KEY, jwtConstants } from 'module/auth/constants';
+import { HandlerException } from 'src/utils/global_handle_exception.utils';
+import { NormalizedResponse } from 'src/utils/normalize_response.utils';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private jwtService: JwtService, private reflector: Reflector) {}
+  private failed_response: HandlerException = new HandlerException(
+    new UnauthorizedException().getStatus(),
+    "Người dùng không có quyền truy cập"
+  );
+        // failed_response.message = "Người dùng không có quyền truy cập"
+        // failed_response.status_code = new UnauthorizedException().getStatus();
+
+
+  constructor(private jwtService: JwtService, 
+    private reflector: Reflector, 
+    private authService: AuthService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
@@ -33,15 +46,27 @@ export class AuthGuard implements CanActivate {
     }
     try {
       const payload = await this.jwtService.verifyAsync(token, {
-        secret: jwtConstants.secret,
+        secret: process.env.JWT_SECRET,
       });
       // 💡 We're assigning the payload to the request object here
       // so that we can access it in our route handlers
-      request['user'] = payload;
-      role = payload["role"];
-      console.log(role);
+      // We should somehow check the expire date
+
+
+      if(!await this.authService.is_in_black_list(payload["id"])){
+        request['user'] = payload;
+        role = payload["role"];
+        console.log(role);
+      }
+      else{
+        // const failed_response: HandlerException = new HandlerException();
+        // failed_response.message = "Người dùng không có quyền truy cập"
+        // failed_response.status_code = new UnauthorizedException().getStatus();
+        this.failed_response.message = "Token không hợp lệ"
+        throw this.failed_response;
+      }
     } catch {
-      throw new UnauthorizedException();
+      throw this.failed_response;
     }
     return true;
   }

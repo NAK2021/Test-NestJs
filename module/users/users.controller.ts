@@ -1,9 +1,10 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { Public } from 'module/auth/constants';
 import { CreateUserDto } from './dto/createUser.dto';
 import { UsersService } from './users.service';
 import { UpdateDescription } from 'typeorm';
 import { UpdateUserDto } from './dto/updateUser.dto';
+import { PaginationDto } from 'dto/pagination.dto';
 
 @Controller('users')
 export class UsersController {
@@ -12,8 +13,8 @@ export class UsersController {
 
     @Get()
     @Public()
-    findAll(){
-        return this.userService.findAll();
+    findAll(@Query() paginationDto : PaginationDto){
+        return this.userService.findAll(paginationDto);
     }
 
 

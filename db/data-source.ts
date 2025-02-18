@@ -1,4 +1,5 @@
 import { config } from "dotenv";
+import { InvalidatedToken } from "entities/invalidated_token.entity";
 import { User } from "entities/user.entity";
 import { VideoUpload } from "entities/video_upload.entity";
 import { DataSource, DataSourceOptions } from "typeorm";
@@ -12,7 +13,7 @@ export const datasourceOption: DataSourceOptions = {
   username: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  entities: [User, VideoUpload], 
+  entities: [User, VideoUpload, InvalidatedToken], 
   // migrations: [],
   logging: false,
   synchronize: true, //In development --> set True --> help increase the pace

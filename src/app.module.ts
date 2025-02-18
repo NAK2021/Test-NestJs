@@ -11,6 +11,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from 'middleware/guard/auth.guard';
 import { RolesGuard } from 'middleware/guard/roles.gurad';
 import { VideoUploadModule } from 'module/video_upload/video_upload.module';
+import { JwtService } from '@nestjs/jwt';
 
 @Module({
   imports: [ //Lấy thông tin về để sử dụng (MODULE)
@@ -24,6 +25,7 @@ import { VideoUploadModule } from 'module/video_upload/video_upload.module';
   controllers: [AppController],
   providers: [
     AppService,
+    JwtService,
     {
       provide: APP_GUARD,
       useClass: AuthGuard,
